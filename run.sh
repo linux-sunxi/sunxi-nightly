@@ -38,6 +38,7 @@ for b in \
 	stage/sunxi-3.0 \
 	stage/sunxi-3.4 \
 	experimental/sunxi-3.10 \
+	sunxi-devel \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="linux-sunxi-$b2"
