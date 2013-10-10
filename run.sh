@@ -70,7 +70,8 @@ for b in \
 			name="$b2"
 		fi
 		builddir="build_linux-$name"
-		mkdir -p "$builddir"
+		nightly="nightly/linux-sunxi/linux-sunxi-$name"
+		mkdir -p "$nightly" "$builddir"
 
 		error=false
 		for x in $defconfig uImage modules modules_install; do
@@ -84,10 +85,29 @@ for b in \
 				break;
 			fi
 		done
+
+		tstamp=$(date +%Y%m%dT%k%M%S)
+		prefix="linux-sunxi-$name-$tstamp"
+
 		if $error; then
-			mv $builddir.out $builddir.err
+			mv $builddir.out "$nightly/$prefix.err.txt"
 		else
-			mv $builddir.out $builddir.log
+			mv $builddir.out "$nightly/$prefix.build.txt"
+
+			mv "$builddir/output" "$builddir/$prefix"
+			mkdir -p "$builddir/$prefix/boot"
+			cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
+
+
+			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
+
+			cd "$nightly"
+			sha1sum -b $prefix.tar.xz > $prefix.sha1
+
+			for x in build.txt txt sha1 tar.xz; do
+				ln -sf "$prefix.$x" "linux-sunxi-$name-latest.$x"
+			done
+			cd - > /dev/null
 		fi
 	done
 done
