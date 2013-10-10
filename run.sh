@@ -51,6 +51,6 @@ for b in \
 		else
 			name="$b2-${defconfig%_defconfig}"
 		fi
-		echo "build_$name"
+		echo "build_linux-$name"
 	done
 done
