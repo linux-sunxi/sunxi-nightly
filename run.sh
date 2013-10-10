@@ -73,9 +73,10 @@ for b in \
 		mkdir -p "$builddir"
 
 		error=false
-		for x in $defconfig uImage modules; do
+		for x in $defconfig uImage modules modules_install; do
 			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
 				O="$BASE/$builddir" -j$JOBS \
+				INSTALL_MOD_PATH=output \
 				LOADADDR=0x40008000 \
 				$x 2>&1 | tee -a $builddir.out
 			if grep -q -e '\[sub-make\]' $builddir.out; then
@@ -88,6 +89,5 @@ for b in \
 		else
 			mv $builddir.out $builddir.log
 		fi
-
 	done
 done
