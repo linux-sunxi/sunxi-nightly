@@ -42,21 +42,32 @@ for b in \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="linux-sunxi-$b2"
+	updated=false
 
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
 		git clone -s linux-sunxi.git -b $b "$D"
+	else
+		cd "$D"
+		git remote update
+		if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/$b)" ]; then
+			updated=true
+			git reset -q --hard "origin/$b"
+		fi
+		cd - > /dev/null
 	fi
+
+	$updated || continue
 
 	for defconfig in $D/arch/arm/configs/sun?i*_defconfig \
 		$D/arch/arm/configs/a[123][023]*_defconfig; do
 
 		[ -s "$defconfig" ] || continue
 		defconfig="${defconfig##*/}"
-		if [ "$defconfig" = "sunxi_defconfig" ]; then
-			name="$b2"
-		else
+		if [ "$defconfig" != "sunxi_defconfig" ]; then
 			name="$b2-${defconfig%_defconfig}"
+		else
+			name="$b2"
 		fi
 		builddir="build_linux-$name"
 		mkdir -p "$builddir"
