@@ -2,6 +2,8 @@
 
 GH=https://github.com/linux-sunxi
 BASE="$PWD"
+CROSS_COMPILE=arm-linux-gnueabi-
+JOBS=8
 
 title() {
 	echo "=== $* ==="
@@ -27,6 +29,9 @@ else
 	git remote prune origin
 	cd - > /dev/null
 fi
+
+rm -f build_linux-*/.config build_linux-*.{out,err,log}
+
 for b in \
 	sunxi-3.0 \
 	sunxi-3.4 \
@@ -41,6 +46,7 @@ for b in \
 	if [ ! -s $D/.git/config ]; then
 		git clone -s linux-sunxi.git -b $b "$D"
 	fi
+
 	for defconfig in $D/arch/arm/configs/sun?i*_defconfig \
 		$D/arch/arm/configs/a[123][023]*_defconfig; do
 
@@ -51,6 +57,24 @@ for b in \
 		else
 			name="$b2-${defconfig%_defconfig}"
 		fi
-		echo "build_linux-$name"
+		builddir="build_linux-$name"
+		mkdir -p "$builddir"
+
+		error=false
+		for x in $defconfig uImage modules; do
+			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
+				O="$BASE/$builddir" -j$JOBS \
+				$x 2>&1 | tee -a $builddir.out
+			if grep -q -e '\[sub-make\]' $builddir.out; then
+				error=true
+				break;
+			fi
+		done
+		if $error; then
+			mv $builddir.out $builddir.err
+		else
+			mv $builddir.out $builddir.log
+		fi
+
 	done
 done
