@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd "$(dirname $0)"
+
 GH=https://github.com/linux-sunxi
 BASE="$PWD"
 CROSS_COMPILE=arm-linux-gnueabi-
@@ -10,13 +12,6 @@ title() {
 }
 err() {
 	echo "$*" >&2
-}
-
-rebuild() {
-	local branch="$1" name="$2"
-	local d= dir=
-
-
 }
 
 D=linux-sunxi.git
@@ -86,7 +81,7 @@ for b in \
 			fi
 		done
 
-		tstamp=$(date +%Y%m%dT%k%M%S)
+		tstamp=$(date +%Y%m%dT%H%M%S)
 		prefix="linux-sunxi-$name-$tstamp"
 
 		if $error; then
@@ -102,7 +97,7 @@ for b in \
 			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
 
 			cd "$nightly"
-			sha1sum -b $prefix.tar.xz > $prefix.sha1
+			sha1sum -b "$prefix.tar.xz" > "$prefix.sha1"
 
 			for x in build.txt txt sha1 tar.xz; do
 				ln -sf "$prefix.$x" "linux-sunxi-$name-latest.$x"
@@ -111,3 +106,5 @@ for b in \
 		fi
 	done
 done
+
+exec rsync -ai --delete-after nightly/linux-sunxi/ linux-sunxi.org:nightly/linux-sunxi/
