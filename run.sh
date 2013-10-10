@@ -64,6 +64,7 @@ for b in \
 		for x in $defconfig uImage modules; do
 			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
 				O="$BASE/$builddir" -j$JOBS \
+				LOADADDR=0x40008000 \
 				$x 2>&1 | tee -a $builddir.out
 			if grep -q -e '\[sub-make\]' $builddir.out; then
 				error=true
