@@ -39,6 +39,15 @@ for b in \
 	D="linux-sunxi-$b2"
 	updated=false
 
+	case "$b2" in
+	3.0|3.4|*-3.0|*-3.4)
+		dtb=false
+		;;
+	*)
+		dtb=true
+		;;
+	esac
+
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
 		git clone -s linux-sunxi.git -b $b "$D"
@@ -81,6 +90,11 @@ for b in \
 			fi
 		done
 
+		if $dtb; then
+			# TODO: compile dtb files
+			true
+		fi
+
 		tstamp=$(date +%Y%m%dT%H%M%S)
 		prefix="linux-sunxi-$name-$tstamp"
 
@@ -93,6 +107,10 @@ for b in \
 			mkdir -p "$builddir/$prefix/boot"
 			cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
 
+			if $dtb; then
+				# TODO: install dtb files
+				true
+			fi
 
 			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
 
