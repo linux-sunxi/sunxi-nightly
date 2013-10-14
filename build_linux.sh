@@ -45,6 +45,7 @@ for b in \
 		git clone -s linux-sunxi.git -b $b "$D" || continue
 		cd "$D"
 		rev="$(git rev-parse origin/$b)"
+		update=true
 		cd - > /dev/null
 	else
 		cd "$D"
