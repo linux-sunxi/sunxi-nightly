@@ -39,15 +39,6 @@ for b in \
 	D="linux-sunxi-$b2"
 	updated=false
 
-	case "$b2" in
-	3.0|3.4|*-3.0|*-3.4)
-		dtb=false
-		;;
-	*)
-		dtb=true
-		;;
-	esac
-
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
 		git clone -s linux-sunxi.git -b $b "$D"
@@ -90,10 +81,19 @@ for b in \
 			fi
 		done
 
-		if $dtb; then
-			# TODO: compile dtb files
-			true
-		fi
+		for x in $D/arch/arm/boot/dts/sun?i*.dts; do
+			[ -s "$x" ] || continue
+			x=${x##*/}
+			x=${x%.dts}.dtb
+
+			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
+				O="$BASE/$builddir" -j$JOBS \
+				$x 2>&1 | tee -a $builddir.out
+			if grep -q -e '\[sub-make\]' $builddir.out; then
+				error=true
+				break;
+			fi
+		done
 
 		tstamp=$(date +%Y%m%dT%H%M%S)
 		prefix="linux-sunxi-$name-$tstamp"
@@ -107,10 +107,9 @@ for b in \
 			mkdir -p "$builddir/$prefix/boot"
 			cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
 
-			if $dtb; then
-				# TODO: install dtb files
-				true
-			fi
+			for x in "$builddir"/arch/arm/boot/dts/*.dtb; do
+				cp -v "$x" "$builddir/$prefix/boot"
+			done
 
 			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
 
@@ -121,6 +120,8 @@ for b in \
 				ln -sf "$prefix.$x" "linux-sunxi-$name-latest.$x"
 			done
 			cd - > /dev/null
+
+			rm -rf "$builddir/$prefix/"
 		fi
 	done
 done
