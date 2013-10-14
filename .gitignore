@@ -1,2 +1,2 @@
-linux-sunxi*
-build_*
+linux-sunxi*/
+build_*/
