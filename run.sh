@@ -38,14 +38,19 @@ for b in \
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="linux-sunxi-$b2"
 	updated=false
+	rev=
 
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
-		git clone -s linux-sunxi.git -b $b "$D"
+		git clone -s linux-sunxi.git -b $b "$D" || continue
+		cd "$D"
+		rev="$(git rev-parse origin/$b)"
+		cd - > /dev/null
 	else
 		cd "$D"
 		git remote update
-		if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/$b)" ]; then
+		rev="$(git rev-parse origin/$b)"
+		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
 			updated=true
 			git reset -q --hard "origin/$b"
 		fi
@@ -96,7 +101,8 @@ for b in \
 		done
 
 		tstamp=$(date +%Y%m%dT%H%M%S)
-		prefix="linux-sunxi-$name-$tstamp"
+		rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
+		prefix="linux-sunxi-$name-$tstamp-$rev"
 
 		if $error; then
 			mv $builddir.out "$nightly/$prefix.err.txt"
@@ -108,7 +114,7 @@ for b in \
 			cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
 
 			for x in "$builddir"/arch/arm/boot/dts/*.dtb; do
-				cp -v "$x" "$builddir/$prefix/boot"
+				cp "$x" "$builddir/$prefix/boot"
 			done
 
 			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
