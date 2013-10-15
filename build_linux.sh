@@ -39,7 +39,10 @@ for b in \
 	sunxi-devel \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
-	D="$NAME-$b2"
+	D="$NAME"
+	if [ "$b2" != "sunxi" ]; then
+		D="$D-$b2"
+	fi
 	updated=false
 	rev=
 
