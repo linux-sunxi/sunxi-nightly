@@ -7,6 +7,9 @@ BASE="$PWD"
 CROSS_COMPILE=arm-linux-gnueabi-
 JOBS=8
 
+NAME=u-boot-sunxi
+BUILD=build_u-boot
+
 title() {
 	echo "=== $* ==="
 }
@@ -14,9 +17,7 @@ err() {
 	echo "$*" >&2
 }
 
-set -x
-
-D=u-boot-sunxi.git
+D=$NAME.git
 title "$D"
 if [ ! -s $D/config ]; then
 	git clone --mirror $GH/$D
@@ -27,25 +28,25 @@ else
 	cd - > /dev/null
 fi
 
-rm -f build_u-boot-*/.config build_uboot-*.{out,err,log}
+rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
 for b in \
 	sunxi \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
-	updated=false
-	rev=
-	D="u-boot-sunxi"
+	D="$NAME"
 	if [ "$b2" != "sunxi" ]; then
 		D="$D-$b2"
 	fi
+	updated=false
+	rev=
 
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
-		git clone -s u-boot-sunxi.git -b $b "$D" || continue
+		git clone -s $NAME.git -b $b "$D" || continue
 		cd "$D"
 		rev="$(git rev-parse origin/$b)"
-		update=tru
+		update=true
 		cd - > /dev/null
 	else
 		cd "$D"
@@ -59,6 +60,7 @@ for b in \
 	fi
 
 	$updated || continue
+
 done
 
-exec rsync -ai --delete-after nightly/u-boot-sunxi/ linux-sunxi.org:nightly/u-boot-sunxi/
+exec rsync -ai --delete-after nightly/$NAME/ linux-sunxi.org:nightly/$NAME/
