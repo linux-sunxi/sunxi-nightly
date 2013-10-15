@@ -7,6 +7,9 @@ BASE="$PWD"
 CROSS_COMPILE=arm-linux-gnueabi-
 JOBS=8
 
+NAME=linux-sunxi
+BUILD=build_linux
+
 title() {
 	echo "=== $* ==="
 }
@@ -14,7 +17,7 @@ err() {
 	echo "$*" >&2
 }
 
-D=linux-sunxi.git
+D=$NAME.git
 title "$D"
 if [ ! -s $D/config ]; then
 	git clone --mirror $GH/$D
@@ -25,7 +28,7 @@ else
 	cd - > /dev/null
 fi
 
-rm -f build_linux-*/.config build_linux-*.{out,err,log}
+rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
 for b in \
 	sunxi-3.0 \
@@ -36,13 +39,13 @@ for b in \
 	sunxi-devel \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
-	D="linux-sunxi-$b2"
+	D="$NAME-$b2"
 	updated=false
 	rev=
 
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
-		git clone -s linux-sunxi.git -b $b "$D" || continue
+		git clone -s $NAME.git -b $b "$D" || continue
 		cd "$D"
 		rev="$(git rev-parse origin/$b)"
 		update=true
@@ -70,8 +73,8 @@ for b in \
 		else
 			name="$b2"
 		fi
-		builddir="build_linux-$name"
-		nightly="nightly/linux-sunxi/linux-sunxi-$name"
+		builddir="$BUILD-$name"
+		nightly="nightly/$NAME/$NAME-$name"
 		mkdir -p "$nightly" "$builddir"
 
 		error=false
@@ -81,11 +84,12 @@ for b in \
 		fi
 
 		for x in $targets; do
-			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
+			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=$CROSS_COMPILE \
 				O="$BASE/$builddir" -j$JOBS \
 				INSTALL_MOD_PATH=output \
 				LOADADDR=0x40008000 \
 				$x 2>&1 | tee -a $builddir.out
+
 			if grep -q -e '\[sub-make\]' $builddir.out; then
 				error=true
 				break;
@@ -94,7 +98,7 @@ for b in \
 
 		tstamp=$(date +%Y%m%dT%H%M%S)
 		rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
-		prefix="linux-sunxi-$name-$tstamp-$rev"
+		prefix="$NAME-$name-$tstamp-$rev"
 
 		if $error; then
 			mv $builddir.out "$nightly/$prefix.err.txt"
@@ -115,7 +119,7 @@ for b in \
 			sha1sum -b "$prefix.tar.xz" > "$prefix.sha1"
 
 			for x in build.txt txt sha1 tar.xz; do
-				ln -sf "$prefix.$x" "linux-sunxi-$name-latest.$x"
+				ln -sf "$prefix.$x" "$NAME-$name-latest.$x"
 			done
 			cd - > /dev/null
 
@@ -124,4 +128,4 @@ for b in \
 	done
 done
 
-exec rsync -ai --delete-after nightly/linux-sunxi/ linux-sunxi.org:nightly/linux-sunxi/
+exec rsync -ai --delete-after nightly/$NAME/ linux-sunxi.org:nightly/$NAME/
