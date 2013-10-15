@@ -75,25 +75,16 @@ for b in \
 		mkdir -p "$nightly" "$builddir"
 
 		error=false
-		for x in $defconfig uImage modules modules_install; do
+		targets="$defconfig uImage modules modules_install"
+		if ls -1 $D/arch/arm/boot/dts/sun?i*.dts > /dev/null 2>&1; then
+			targets="$targets dtbs"
+		fi
+
+		for x in $targets; do
 			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
 				O="$BASE/$builddir" -j$JOBS \
 				INSTALL_MOD_PATH=output \
 				LOADADDR=0x40008000 \
-				$x 2>&1 | tee -a $builddir.out
-			if grep -q -e '\[sub-make\]' $builddir.out; then
-				error=true
-				break;
-			fi
-		done
-
-		for x in $D/arch/arm/boot/dts/sun?i*.dts; do
-			[ -s "$x" ] || continue
-			x=${x##*/}
-			x=${x%.dts}.dtb
-
-			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- \
-				O="$BASE/$builddir" -j$JOBS \
 				$x 2>&1 | tee -a $builddir.out
 			if grep -q -e '\[sub-make\]' $builddir.out; then
 				error=true
