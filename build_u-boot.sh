@@ -61,6 +61,57 @@ for b in \
 
 	$updated || continue
 
+	tstamp=$(date +%Y%m%dT%H%M%S)
+	rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
+
+	builddir_base=$BUILD"${D##$NAME}"
+	nightly=$builddir_base/$D-$tstamp-$rev
+
+	mkdir -p "$nightly"
+
+	for board in $(grep sun.i $D/boards.cfg | awk '{ print $7; }'); do
+		name=$(echo "$board" | tr 'A-Z' 'a-z')
+		log=$builddir-$name
+		builddir=${builddir_base}/$name
+		prefix=$D-$name
+		error=false
+
+		title "$prefix"
+
+		mkdir -p "$builddir"
+
+		for x in ${board}_config all; do
+			make -C "$BASE/$D" CROSS_COMPILE=$CROSS_COMPILE \
+				O="$BASE/$builddir" -j$JOBS \
+				"$x" >> $log.out 2>&1
+
+			if [ $? -ne 0 ]; then
+				error=true
+				break
+			fi
+		done
+
+		if $error; then
+			mv $log.out "$nightly/$prefix.err.txt"
+		else
+			mv $log.out "$nightly/$prefix.build.txt"
+
+			mkdir -p "$nightly/$prefix-$tstamp-$rev"
+			for x in u-boot.bin u-boot-sunxi-with-spl.bin spl/sunxi-spl.bin; do
+				[ -s "$builddir/$x" ] || continue
+				mv "$builddir/$x" "$nightly/$prefix-$tstamp-$rev/"
+			done
+			tar -C "$nightly" -vJcf "$nightly/$prefix.tar.xz" "$prefix-$tstamp-$rev" > "$nightly/$prefix.txt"
+			rm -rf "$nightly/$prefix-$tstamp-$rev/"
+
+			cd "$nightly"
+			sha1sum -b "$prefix.tar.xz" > "$prefix.sha1"
+			cd - > /dev/null
+		fi
+	done
+
+	mv "$nightly" "nightly/$NAME/"
+	ln -snf "$D-$tstamp-$rev" "nightly/$NAME/$D-latest"
 done
 
 exec rsync -ai --delete-after nightly/$NAME/ linux-sunxi.org:nightly/$NAME/
