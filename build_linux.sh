@@ -37,6 +37,7 @@ for b in \
 	stage/sunxi-3.4 \
 	experimental/sunxi-3.10 \
 	sunxi-devel \
+	sunxi-next \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="$NAME"
@@ -48,8 +49,8 @@ for b in \
 
 	title "$D"
 	if [ ! -s $D/.git/config ]; then
-		git clone -s $NAME.git -b $b "$D" || continue
-		cd "$D"
+		git clone -s $NAME.git -b $b "$D"
+		cd "$D" || continue
 		rev="$(git rev-parse origin/$b)"
 		update=true
 		cd - > /dev/null
@@ -82,12 +83,16 @@ for b in \
 		mkdir -p "$nightly" "$builddir"
 
 		error=false
-		targets="$defconfig uImage modules modules_install"
-		if ls -1 $D/arch/arm/boot/dts/sun?i*.dts > /dev/null 2>&1; then
-			targets="$targets dtbs"
-		fi
+		for x in $defconfig uImage modules modules_install dtbs; do
+			case "$x" in
+			dtbs)
+				ls -1 $D/arch/arm/boot/dts/sun?i*.dts > /dev/null 2>&1 || continue
+				;;
+			modules|modules_install)
+				grep -q '^CONFIG_MODULES=y' "$BASE/$builddir/.config" || continue
+				;;
+			esac
 
-		for x in $targets; do
 			make -C "$BASE/$D" ARCH=arm CROSS_COMPILE=$CROSS_COMPILE \
 				O="$BASE/$builddir" -j$JOBS \
 				INSTALL_MOD_PATH=output \
@@ -109,7 +114,10 @@ for b in \
 		else
 			mv $log.out "$nightly/$prefix.build.txt"
 
-			mv "$builddir/output" "$builddir/$prefix"
+			if [ -d "$builddir/output" ]; then
+				mv "$builddir/output" "$builddir/$prefix"
+			fi
+
 			mkdir -p "$builddir/$prefix/boot"
 			cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
 
