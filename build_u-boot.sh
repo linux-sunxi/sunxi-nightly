@@ -71,7 +71,7 @@ for b in \
 
 	for board in $(grep sun.i $D/boards.cfg | awk '{ print $7; }'); do
 		name=$(echo "$board" | tr 'A-Z' 'a-z')
-		log=$builddir-$name
+		log=$builddir_base-$name
 		builddir=${builddir_base}/$name
 		prefix=$D-$name
 		error=false
@@ -97,10 +97,19 @@ for b in \
 			mv $log.out "$nightly/$prefix.build.txt"
 
 			mkdir -p "$nightly/$prefix-$tstamp-$rev"
-			for x in u-boot.bin u-boot-sunxi-with-spl.bin spl/sunxi-spl.bin; do
+
+			spl="$builddir/spl"
+			if [ -s "$spl/sunxi-spl.bin" ]; then
+				mv "$spl/sunxi-spl.bin" "$nightly/$prefix-$tstamp-$rev/"
+			elif [ -s "$spl/u-boot-spl.bin" ]; then
+				# FEL case
+				mv "$spl/u-boot-spl.bin" "$nightly/$prefix-$tstamp-$rev/"
+			fi
+			for x in u-boot.bin u-boot-sunxi-with-spl.bin;  do
 				[ -s "$builddir/$x" ] || continue
 				mv "$builddir/$x" "$nightly/$prefix-$tstamp-$rev/"
 			done
+
 			tar -C "$nightly" -vJcf "$nightly/$prefix.tar.xz" "$prefix-$tstamp-$rev" > "$nightly/$prefix.txt"
 			rm -rf "$nightly/$prefix-$tstamp-$rev/"
 
