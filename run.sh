@@ -11,4 +11,5 @@ cat <<EOT
 
 EOT
 
+./build_u-boot.sh
 exec ./build_linux.sh
