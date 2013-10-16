@@ -77,6 +77,7 @@ for b in \
 			name="$b2"
 		fi
 		builddir="$BUILD-$name"
+		log=$builddir
 		nightly="nightly/$NAME/$NAME-$name"
 		mkdir -p "$nightly" "$builddir"
 
@@ -91,11 +92,11 @@ for b in \
 				O="$BASE/$builddir" -j$JOBS \
 				INSTALL_MOD_PATH=output \
 				LOADADDR=0x40008000 \
-				$x 2>&1 | tee -a $builddir.out
+				$x 2>&1 | tee -a $log.out
 
-			if grep -q -e '\[sub-make\]' $builddir.out; then
+			if grep -q -e '\[sub-make\]' $log.out; then
 				error=true
-				break;
+				break
 			fi
 		done
 
@@ -104,9 +105,9 @@ for b in \
 		prefix="$NAME-$name-$tstamp-$rev"
 
 		if $error; then
-			mv $builddir.out "$nightly/$prefix.err.txt"
+			mv $log.out "$nightly/$prefix.err.txt"
 		else
-			mv $builddir.out "$nightly/$prefix.build.txt"
+			mv $log.out "$nightly/$prefix.build.txt"
 
 			mv "$builddir/output" "$builddir/$prefix"
 			mkdir -p "$builddir/$prefix/boot"
