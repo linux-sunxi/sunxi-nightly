@@ -120,10 +120,7 @@ for b in \
 
 			mkdir -p "$builddir/$prefix/boot"
 			cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
-
-			for x in "$builddir"/arch/arm/boot/dts/*.dtb; do
-				cp "$x" "$builddir/$prefix/boot"
-			done
+			cp "$builddir/arch/arm/boot/dts"/*.dtb "$builddir/$prefix/boot"
 
 			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
 
