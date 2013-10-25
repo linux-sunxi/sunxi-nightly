@@ -44,7 +44,6 @@ for b in \
 	if [ "$b2" != "sunxi" ]; then
 		D="$D-$b2"
 	fi
-	updated=false
 	rev=
 
 	title "$D"
@@ -52,7 +51,7 @@ for b in \
 		git clone -s $NAME.git -b $b "$D"
 		cd "$D" || continue
 		rev="$(git rev-parse origin/$b)"
-		update=true
+		updated=true
 		cd - > /dev/null
 	else
 		cd "$D"
@@ -61,11 +60,13 @@ for b in \
 		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
 			updated=true
 			git reset -q --hard "origin/$b"
+		else
+			updated=false
 		fi
 		cd - > /dev/null
 	fi
 
-	$updated || continue
+	rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
 
 	for defconfig in $D/arch/arm/configs/sun?i*_defconfig \
 		$D/arch/arm/configs/a[123][023]*_defconfig; do
@@ -81,6 +82,24 @@ for b in \
 		log=$builddir
 		nightly="nightly/$NAME/$NAME-$name"
 		mkdir -p "$nightly" "$builddir"
+
+		if $updated; then
+			build=true
+		else
+			build=false
+			x=$(ls -1 "$nightly"/$NAME-$name-*-$rev.{build,err}.txt 2> /dev/null |
+				sed -ne "/$NAME-$name-[0123456789T]\+-$rev\..*\.txt/p" |
+				sort | tail -n1 | grep '.err.txt$')
+			if [ -s "$x" ]; then
+				if grep -q 'mali_osk_atomics.o: invalid string offset' "$x"; then
+					build=true
+				fi
+			fi
+		fi
+
+		$build || continue
+
+		title "$NAME-$name ($rev)"
 
 		error=false
 		for x in $defconfig uImage modules modules_install dtbs; do
@@ -106,7 +125,6 @@ for b in \
 		done
 
 		tstamp=$(date +%Y%m%dT%H%M%S)
-		rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
 		prefix="$NAME-$name-$tstamp-$rev"
 
 		if $error; then
