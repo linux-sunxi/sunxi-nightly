@@ -91,7 +91,8 @@ for b in \
 				sed -ne "/$NAME-$name-[0123456789T]\+-$rev\..*\.txt/p" |
 				sort | tail -n1 | grep '.err.txt$')
 			if [ -s "$x" ]; then
-				if grep -q 'mali_osk_atomics.o: invalid string offset' "$x"; then
+				if grep -q 'internal error, aborting at' "$x" ||
+					grep -q 'mali_osk_atomics.o: invalid string offset' "$x"; then
 					build=true
 				fi
 			fi
