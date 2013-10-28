@@ -38,6 +38,7 @@ for b in \
 	experimental/sunxi-3.10 \
 	sunxi-devel \
 	sunxi-next \
+	sunxi-next-usb \
 	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="$NAME"
