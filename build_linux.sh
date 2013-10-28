@@ -142,11 +142,12 @@ for b in \
 			cp "$builddir/arch/arm/boot/dts"/*.dtb "$builddir/$prefix/boot"
 
 			tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
+			gzip -c "$builddir/.config" > "$nightly/$prefix.config.gz"
 
 			cd "$nightly"
 			sha1sum -b "$prefix.tar.xz" > "$prefix.sha1"
 
-			for x in build.txt txt sha1 tar.xz; do
+			for x in build.txt txt sha1 config.gz tar.xz; do
 				ln -sf "$prefix.$x" "$NAME-$name-latest.$x"
 			done
 			cd - > /dev/null
