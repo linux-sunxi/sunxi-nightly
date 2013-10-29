@@ -62,7 +62,7 @@ for b in \
 	$updated || continue
 
 	tstamp=$(date +%Y%m%dT%H%M%S)
-	rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
+	rev=$(echo $rev | sed -e 's/^\(.......\).*/\1/')
 
 	builddir_base=$BUILD"${D##$NAME}"
 	nightly=$builddir_base/$D-$tstamp-$rev
