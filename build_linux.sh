@@ -67,7 +67,7 @@ for b in \
 		cd - > /dev/null
 	fi
 
-	rev=$(echo $rev | sed -e 's/.*\(........\)$/\1/')
+	rev=$(echo $rev | sed -e 's/^\(.......\).*/\1/')
 
 	for defconfig in $D/arch/arm/configs/sun?i*_defconfig \
 		$D/arch/arm/configs/a[123][023]*_defconfig; do
