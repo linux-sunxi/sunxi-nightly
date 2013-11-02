@@ -2,7 +2,6 @@
 
 cd "$(dirname $0)"
 
-GH=https://github.com/linux-sunxi
 BASE="$PWD"
 CROSS_COMPILE=arm-linux-gnueabi-
 JOBS=8
@@ -16,17 +15,6 @@ title() {
 err() {
 	echo "$*" >&2
 }
-
-D=$NAME.git
-title "$D"
-if [ ! -s $D/config ]; then
-	git clone --mirror $GH/$D
-else
-	cd $D
-	git remote update
-	git remote prune origin
-	cd - > /dev/null
-fi
 
 rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
