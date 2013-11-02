@@ -18,9 +18,6 @@ err() {
 
 rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
-for b in \
-	sunxi \
-	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="$NAME"
 	if [ "$b2" != "sunxi" ]; then
@@ -109,6 +106,3 @@ for b in \
 
 	mv "$nightly" "nightly/$NAME/"
 	ln -snf "$D-$tstamp-$rev" "nightly/$NAME/$D-latest"
-done
-
-exec rsync -ai --delete-after nightly/$NAME/ linux-sunxi.org:nightly/$NAME/

@@ -18,16 +18,6 @@ err() {
 
 rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
-for b in \
-	sunxi-3.0 \
-	sunxi-3.4 \
-	stage/sunxi-3.0 \
-	stage/sunxi-3.4 \
-	experimental/sunxi-3.10 \
-	sunxi-devel \
-	sunxi-next \
-	sunxi-next-usb \
-	; do
 	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
 	D="$NAME"
 	if [ "$b2" != "sunxi" ]; then
@@ -144,6 +134,3 @@ for b in \
 			rm -rf "$builddir/$prefix/"
 		fi
 	done
-done
-
-exec rsync -ai --delete-after nightly/$NAME/ linux-sunxi.org:nightly/$NAME/
