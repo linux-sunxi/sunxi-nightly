@@ -111,6 +111,7 @@ build_linux() {
 	local prefix=$(get_prefix "$name" "$remote" "$branch")
 	local build_all=false build=
 	local base="$PWD" prefix2= x=
+	local builddir= nightly=
 
 	if updated "$refdir" "$branch" "$prefix"; then
 		build_all=true
@@ -137,6 +138,8 @@ build_linux() {
 
 		if $build_all; then
 			build=true
+		elif [ ! -d "$builddir" ]; then
+			build=true
 		else
 			build=false
 			x="$(ls -1 "$nightly/$prefix2"-*-$rev.{build,err}.txt 2> /dev/null |
@@ -152,7 +155,7 @@ build_linux() {
 
 		$build || continue
 
-		title "$prefix2 ($rev)"
+		"$base/build_linux.sh" "$defconfig" "$builddir" "$nightly" "$prefix2"
 	done
 
 	cd - > /dev/null
@@ -191,17 +194,22 @@ build_uboot() {
 	local build=false
 	local base="$PWD"
 
+	local builddir="$base/build_$(echo $prefix | sed -e 's|-sunxi||g')"
+	local nightly="$base/nightly/$name/$prefix"
+
 	if ! updated "$refdir" "$branch" "$prefix"; then
 		build=true
 	elif [ ! -s "$prefix/.git/config" ]; then
 		return
+	elif [ ! -d "$builddir" ]; then
+		build=true
 	fi
 
 	$build || continue
 
+
 	cd "$prefix"
-	rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
-	title "$prefix ($rev)"
+	"$base/build_u-boot.sh" "$builddir" "$nightly" "$prefix"
 	cd - > /dev/null
 }
 
