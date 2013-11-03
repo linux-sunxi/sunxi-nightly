@@ -18,34 +18,6 @@ err() {
 
 rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
-	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
-	D="$NAME"
-	if [ "$b2" != "sunxi" ]; then
-		D="$D-$b2"
-	fi
-	updated=false
-	rev=
-
-	title "$D"
-	if [ ! -s $D/.git/config ]; then
-		git clone -s $NAME.git -b $b "$D" || continue
-		cd "$D"
-		rev="$(git rev-parse origin/$b)"
-		update=true
-		cd - > /dev/null
-	else
-		cd "$D"
-		git remote update
-		rev="$(git rev-parse origin/$b)"
-		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
-			updated=true
-			git reset -q --hard "origin/$b"
-		fi
-		cd - > /dev/null
-	fi
-
-	$updated || continue
-
 	tstamp=$(date +%Y%m%dT%H%M%S)
 	rev=$(echo $rev | sed -e 's/^\(.......\).*/\1/')
 

@@ -18,68 +18,11 @@ err() {
 
 rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
-	b2="$(echo "$b" | tr '/' '-' | sed -e 's|sunxi-||g' )"
-	D="$NAME"
-	if [ "$b2" != "sunxi" ]; then
-		D="$D-$b2"
-	fi
-	rev=
 
-	title "$D"
-	if [ ! -s $D/.git/config ]; then
-		git clone -s $NAME.git -b $b "$D"
-		cd "$D" || continue
-		rev="$(git rev-parse origin/$b)"
-		updated=true
-		cd - > /dev/null
-	else
-		cd "$D"
-		git remote update
-		rev="$(git rev-parse origin/$b)"
-		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
-			updated=true
-			git reset -q --hard "origin/$b"
-		else
-			updated=false
-		fi
-		cd - > /dev/null
-	fi
-
-	rev=$(echo $rev | sed -e 's/^\(.......\).*/\1/')
-
-	for defconfig in $D/arch/arm/configs/sun?i*_defconfig \
-		$D/arch/arm/configs/a[123][023]*_defconfig; do
-
-		[ -s "$defconfig" ] || continue
-		defconfig="${defconfig##*/}"
-		if [ "$defconfig" != "sunxi_defconfig" ]; then
-			name="$b2-${defconfig%_defconfig}"
-		else
-			name="$b2"
-		fi
 		builddir="$BUILD-$name"
 		log=$builddir
 		nightly="nightly/$NAME/$NAME-$name"
 		mkdir -p "$nightly" "$builddir"
-
-		if $updated; then
-			build=true
-		else
-			build=false
-			x=$(ls -1 "$nightly"/$NAME-$name-*-$rev.{build,err}.txt 2> /dev/null |
-				sed -ne "/$NAME-$name-[0123456789T]\+-$rev\..*\.txt/p" |
-				sort | tail -n1 | grep '.err.txt$')
-			if [ -s "$x" ]; then
-				if grep -q 'internal error, aborting at' "$x" ||
-					grep -q 'mali_osk_atomics.o: invalid string offset' "$x"; then
-					build=true
-				fi
-			fi
-		fi
-
-		$build || continue
-
-		title "$NAME-$name ($rev)"
 
 		error=false
 		for x in $defconfig uImage modules modules_install dtbs; do
@@ -133,4 +76,3 @@ rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 
 			rm -rf "$builddir/$prefix/"
 		fi
-	done

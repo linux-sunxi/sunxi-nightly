@@ -19,12 +19,32 @@ err() {
 }
 
 get_prefix() {
-	local name="$1" remote="$2"
-	local prefix="$name"
+	local remote= prefix=
+	local x=
 
+	if [ $# = 0 ]; then
+		:
+	elif [ $# -eq 1 ]; then
+		prefix="$1"
+		shift
+	elif [ $# -gt 1 ]; then
+		prefix="$1"
+		remote="$2"
+		shift 2
+	fi
+
+	# prefix developer trees
 	if [ -n "$remote" -a "$remote" != "origin" ]; then
 		prefix="$prefix-$remote"
 	fi
+
+	# branches and extras
+	for x; do
+		x="$(echo "$x" | tr '/' '-' | sed -e 's|sunxi-||g' )"
+		if [ -n "$x" -a "$x" != sunxi ]; then
+			prefix="$prefix-$x"
+		fi
+	done
 
 	echo "$prefix"
 }
@@ -51,6 +71,32 @@ clone() {
 	fi
 }
 
+updated() {
+	local refdir="$1" branch="$2" name="$3"
+	local dir="$PWD/$name"
+	local rev= ret=false
+
+	title "$name"
+
+	if [ ! -s "$dir/.git/config" ]; then
+		git clone -q -s "$refdir" -b "$branch" "$dir"
+		if [ -s "$dir/.git/config" ]; then
+			ret=true
+		fi
+	else
+		cd "$dir"
+		git remote update
+		rev="$(git rev-parse origin/$branch)"
+		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
+			ret=true
+			git reset -q --hard "origin/$b"
+		fi
+		cd - > /dev/null
+	fi
+
+	$ret
+}
+
 push_nightly() {
 	mkdir -p "nightly/$1/"
 	rsync -ai --delete-after "nightly/$1/" "linux-sunxi.org:nightly/$1/"
@@ -60,7 +106,56 @@ push_nightly() {
 # linux
 #
 build_linux() {
-	err "build_linux $*"
+	local name="$1" remote="$2" branch="$3" rev=
+	local refdir=$(name2gitdir "$name" "$remote")
+	local prefix=$(get_prefix "$name" "$remote" "$branch")
+	local build_all=false build=
+	local base="$PWD" prefix2= x=
+
+	if updated "$refdir" "$branch" "$prefix"; then
+		build_all=true
+	elif [ ! -s "$prefix/.git/config" ]; then
+		return
+	fi
+
+	cd "$prefix"
+	rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
+
+	for defconfig in arch/arm/configs/sun?i*_defconfig \
+		arch/arm/configs/a[123][023]*_defconfig; do
+
+		[ -s "$defconfig" ] || continue
+		defconfig="${defconfig##*/}"
+		if [ "$defconfig" != "sunxi_defconfig" ]; then
+			prefix2="$prefix-${defconfig%_defconfig}"
+		else
+			prefix2="$prefix"
+		fi
+
+		builddir="$base/build_$(echo $prefix2 | sed -e 's|-sunxi||g')"
+		nightly="$base/nightly/$name/$prefix2"
+
+		if $build_all; then
+			build=true
+		else
+			build=false
+			x="$(ls -1 "$nightly/$prefix2"-*-$rev.{build,err}.txt 2> /dev/null |
+				sed -ne "/$prefix2-[0123456789T]\+-$rev\..*\.txt/p" |
+				sort | tail -n1 | grep '.err.txt$')"
+			if [ -s "$x" ]; then
+				if grep -q 'internal error, aborting at' "$x" ||
+				   grep -q 'mali_osk_atomics.o: invalid string offset' "$x"; then
+					build=true
+				fi
+			fi
+		fi
+
+		$build || continue
+
+		title "$prefix2 ($rev)"
+	done
+
+	cd - > /dev/null
 }
 
 N=linux-sunxi
@@ -90,7 +185,24 @@ push_nightly $N
 N=u-boot-sunxi
 
 build_uboot() {
-	err "build_uboot $*"
+	local name="$1" remote="$2" branch="$3"
+	local refdir=$(name2gitdir "$name" "$remote")
+	local prefix=$(get_prefix "$name" "$remote" "$branch")
+	local build=false
+	local base="$PWD"
+
+	if ! updated "$refdir" "$branch" "$prefix"; then
+		build=true
+	elif [ ! -s "$prefix/.git/config" ]; then
+		return
+	fi
+
+	$build || continue
+
+	cd "$prefix"
+	rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
+	title "$prefix ($rev)"
+	cd - > /dev/null
 }
 
 clone $N https://github.com/linux-sunxi/$N.git
