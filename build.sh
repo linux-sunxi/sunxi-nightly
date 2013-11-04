@@ -197,7 +197,7 @@ build_uboot() {
 	local builddir="$base/build_$(echo $prefix | sed -e 's|-sunxi||g')"
 	local nightly="$base/nightly/$name/$prefix"
 
-	if ! updated "$refdir" "$branch" "$prefix"; then
+	if updated "$refdir" "$branch" "$prefix"; then
 		build=true
 	elif [ ! -s "$prefix/.git/config" ]; then
 		return
@@ -205,8 +205,7 @@ build_uboot() {
 		build=true
 	fi
 
-	$build || continue
-
+	$build || return
 
 	cd "$prefix"
 	"$base/build_u-boot.sh" "$builddir" "$nightly" "$prefix"

@@ -4,24 +4,18 @@ CROSS_COMPILE=${CROSS_COMPILE:-arm-linux-gnueabi-}
 JOBS=8
 
 title() {
-	cat <<-EOT
-	#
-	# $*
-	#
-	EOT
+	echo "# $*"
 }
 
 main() {
 	local builddir_base="$1" nightly_base="$2" NAME="$3"
 	local log= error=
-	local tstamp= prefix=
+	local prefix=
 	local rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
+	local tstamp=$(date +%Y%m%dT%H%M%S)
+	local nightly="$builddir_base/$NAME-$tstamp-$rev"
 
-	tstamp=$(date +%Y%m%dT%H%M%S)
-
-	mkdir -p "$nightly_base"
-
-	nightly="$builddir_base/$NAME-$tstamp-$rev"
+	mkdir -p "$nightly_base" "$nightly"
 
 	for board in $(grep sun.i boards.cfg | awk '{ print $7; }'); do
 		name=$(echo "$board" | tr 'A-Z' 'a-z')
@@ -38,7 +32,7 @@ main() {
 		for x in ${board}_config all; do
 			make CROSS_COMPILE=$CROSS_COMPILE \
 				O="$builddir" -j$JOBS \
-				"$x" 2>&1 | tee -a "$log.out"
+				"$x" >> $log.out 2>&1
 
 			if [ $? -ne 0 ]; then
 				error=true
@@ -75,7 +69,7 @@ main() {
 	done
 
 	mv "$nightly" "$nightly_base/"
-	ln -snf "$prefix-$tstamp-$rev" "$nightly_base/$prefix-latest"
+	ln -snf "$NAME-$tstamp-$rev" "$nightly_base/$NAME-latest"
 }
 
 main "$@"
