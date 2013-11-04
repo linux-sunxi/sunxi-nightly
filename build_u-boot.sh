@@ -1,46 +1,44 @@
 #!/bin/sh
 
-cd "$(dirname $0)"
-
-BASE="$PWD"
-CROSS_COMPILE=arm-linux-gnueabi-
+CROSS_COMPILE=${CROSS_COMPILE:-arm-linux-gnueabi-}
 JOBS=8
 
-NAME=u-boot-sunxi
-BUILD=build_u-boot
-
 title() {
-	echo "=== $* ==="
-}
-err() {
-	echo "$*" >&2
+	cat <<-EOT
+	#
+	# $*
+	#
+	EOT
 }
 
-rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
+main() {
+	local builddir_base="$1" nightly_base="$2" NAME="$3"
+	local log= error=
+	local tstamp= prefix=
+	local rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
 
 	tstamp=$(date +%Y%m%dT%H%M%S)
-	rev=$(echo $rev | sed -e 's/^\(.......\).*/\1/')
 
-	builddir_base=$BUILD"${D##$NAME}"
-	nightly=$builddir_base/$D-$tstamp-$rev
+	mkdir -p "$nightly_base"
 
-	mkdir -p "$nightly"
+	nightly="$builddir_base/$NAME-$tstamp-$rev"
 
-	for board in $(grep sun.i $D/boards.cfg | awk '{ print $7; }'); do
+	for board in $(grep sun.i boards.cfg | awk '{ print $7; }'); do
 		name=$(echo "$board" | tr 'A-Z' 'a-z')
-		log=$builddir_base-$name
-		builddir=${builddir_base}/$name
-		prefix=$D-$name
+		builddir="$builddir_base/build_$name"
+		log="$builddir"
+		prefix=$NAME-$name
 		error=false
 
-		title "$prefix"
+		title "$prefix ($rev)"
 
 		mkdir -p "$builddir"
+		rm -f "$log.out"
 
 		for x in ${board}_config all; do
-			make -C "$BASE/$D" CROSS_COMPILE=$CROSS_COMPILE \
-				O="$BASE/$builddir" -j$JOBS \
-				"$x" >> $log.out 2>&1
+			make CROSS_COMPILE=$CROSS_COMPILE \
+				O="$builddir" -j$JOBS \
+				"$x" 2>&1 | tee -a "$log.out"
 
 			if [ $? -ne 0 ]; then
 				error=true
@@ -49,22 +47,22 @@ rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 		done
 
 		if $error; then
-			mv $log.out "$nightly/$prefix.err.txt"
+			mv "$log.out" "$nightly/$prefix.err.txt"
 		else
-			mv $log.out "$nightly/$prefix.build.txt"
+			mv "$log.out" "$nightly/$prefix.build.txt"
 
 			mkdir -p "$nightly/$prefix-$tstamp-$rev"
 
 			spl="$builddir/spl"
 			if [ -s "$spl/sunxi-spl.bin" ]; then
-				mv "$spl/sunxi-spl.bin" "$nightly/$prefix-$tstamp-$rev/"
+				cp "$spl/sunxi-spl.bin" "$nightly/$prefix-$tstamp-$rev/"
 			elif [ -s "$spl/u-boot-spl.bin" ]; then
 				# FEL case
-				mv "$spl/u-boot-spl.bin" "$nightly/$prefix-$tstamp-$rev/"
+				cp "$spl/u-boot-spl.bin" "$nightly/$prefix-$tstamp-$rev/"
 			fi
 			for x in u-boot.bin u-boot-sunxi-with-spl.bin;  do
 				[ -s "$builddir/$x" ] || continue
-				mv "$builddir/$x" "$nightly/$prefix-$tstamp-$rev/"
+				cp "$builddir/$x" "$nightly/$prefix-$tstamp-$rev/"
 			done
 
 			tar -C "$nightly" -vJcf "$nightly/$prefix.tar.xz" "$prefix-$tstamp-$rev" > "$nightly/$prefix.txt"
@@ -76,5 +74,8 @@ rm -f $BUILD-*/.config $BUILD-*.{out,err,log}
 		fi
 	done
 
-	mv "$nightly" "nightly/$NAME/"
-	ln -snf "$D-$tstamp-$rev" "nightly/$NAME/$D-latest"
+	mv "$nightly" "$nightly_base/"
+	ln -snf "$prefix-$tstamp-$rev" "$nightly_base/$prefix-latest"
+}
+
+main "$@"
