@@ -89,7 +89,7 @@ updated() {
 		rev="$(git rev-parse origin/$branch)"
 		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
 			ret=true
-			git reset -q --hard "origin/$b"
+			git reset -q --hard "origin/$branch"
 		fi
 		cd - > /dev/null
 	fi
