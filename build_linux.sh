@@ -4,11 +4,7 @@ CROSS_COMPILE=${CROSS_COMPILE:-arm-linux-gnueabi-}
 JOBS=8
 
 title() {
-	cat <<-EOT
-	#
-	# $*
-	#
-	EOT
+	echo "# $*"
 }
 
 main() {
@@ -37,7 +33,7 @@ main() {
 			O="$builddir" -j$JOBS \
 			INSTALL_MOD_PATH=output \
 			LOADADDR=0x40008000 \
-			$x 2>&1 | tee -a "$log.out"
+			$x >> "$log.out" 2>&1
 
 		if [ $? -ne 0 ]; then
 			error=true
