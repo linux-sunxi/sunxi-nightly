@@ -17,7 +17,7 @@ main() {
 
 	mkdir -p "$nightly_base" "$nightly"
 
-	for board in $(grep sun.i boards.cfg | awk '{ print $7; }'); do
+	for board in $(awk '/sun[4567x]i/ {print $7;}' boards.cfg); do
 		name=$(echo "$board" | tr 'A-Z' 'a-z')
 		builddir="$builddir_base/build_$name"
 		log="$builddir"
