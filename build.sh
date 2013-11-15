@@ -180,6 +180,10 @@ done
 clone $N https://github.com/arokux/linux.git arokux
 build_linux $N arokux sunxi-next-usb
 
+clone $N https://github.com/bjzhang/linux-allwinner.git bjzhang
+build_linux $N bjzhang sun7i-xen-dom0
+build_linux $N bjzhang sun7i_xen_domU
+
 push_nightly $N
 
 #
