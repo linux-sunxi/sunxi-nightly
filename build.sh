@@ -222,4 +222,7 @@ build_uboot $N origin sunxi
 clone $N https://github.com/arokux/$N.git arokux
 build_uboot $N arokux sunxi-usb
 
+clone $N https://github.com/bjzhang/$N.git bjzhang
+build_uboot $N bjzhang sunxi_hyp
+
 push_nightly $N
