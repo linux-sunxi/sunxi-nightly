@@ -191,8 +191,12 @@ push_nightly $N
 #
 N=u-boot-sunxi
 
-build_uboot() {
-	local name="$1" remote="$2" branch="$3"
+simple_build() {
+	local builder="$1"
+	local name="$2" remote="$3" branch="$4"
+
+	shift 4
+
 	local refdir=$(name2gitdir "$name" "$remote")
 	local prefix=$(get_prefix "$name" "$remote" "$branch")
 	local build=false
@@ -212,8 +216,12 @@ build_uboot() {
 	$build || return
 
 	cd "$prefix"
-	"$base/build_u-boot.sh" "$builddir" "$nightly" "$prefix"
+	"$builder" "$builddir" "$nightly" "$prefix" "$@"
 	cd - > /dev/null
+}
+
+build_uboot() {
+	simple_build "$PWD/build_u-boot.sh" "$@"
 }
 
 clone $N https://github.com/linux-sunxi/$N.git
@@ -224,5 +232,32 @@ build_uboot $N arokux sunxi-usb
 
 clone $N https://github.com/bjzhang/$N.git bjzhang
 build_uboot $N bjzhang sunxi_hyp
+
+push_nightly $N
+
+#
+# xen
+#
+N=xen-sunxi
+
+_build_xen() {
+	local builddir="$1" nightly="$2" name="$3" base="$4"
+	local x= y=
+	for x in $base/build_linux-bjzhang-sun7i-xen-dom0-sun7i_dom0/arch/arm/boot/dts/*-xen.dtb; do
+		[ -s "$x" ] || continue
+
+		y="${x##*/}"
+		y="${y%-xen.dtb}"
+
+		"$base/build_xen.sh" "$builddir/build_$y" "$nightly/$name-$y" "$name-$y" "$x"
+	done
+}
+
+build_xen() {
+	simple_build "_build_xen" "$@" "$PWD"
+}
+
+clone $N git://xenbits.xen.org/xen.git
+build_xen $N origin master
 
 push_nightly $N
