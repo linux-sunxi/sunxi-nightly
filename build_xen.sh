@@ -7,7 +7,6 @@ title() {
 	echo "# $*"
 }
 
-set -x
 main() {
 	local builddir="$1" nightly="$2" name="$3" dtb="$4"
 	local log="$builddir" error=
