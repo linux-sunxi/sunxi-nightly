@@ -249,7 +249,7 @@ _build_xen() {
 		y="${x##*/}"
 		y="${y%-xen.dtb}"
 
-		"$base/build_xen.sh" "$builddir/build_$y" "$nightly/$name-$y" "$name-$y" "$x"
+		"$base/build_xen.sh" "$builddir/build_$y" "$nightly/$name-$y" "$name-$y" "$y" "$x"
 	done
 }
 

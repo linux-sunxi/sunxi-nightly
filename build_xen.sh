@@ -8,7 +8,7 @@ title() {
 }
 
 main() {
-	local builddir="$1" nightly="$2" name="$3" dtb="$4"
+	local builddir="$1" nightly="$2" name="$3" suffix="$4" dtb="$5"
 	local log="$builddir" error=
 	local tstamp= prefix=
 	local rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
