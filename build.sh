@@ -40,7 +40,7 @@ get_prefix() {
 
 	# branches and extras
 	for x; do
-		x="$(echo "$x" | tr '/' '-' | sed -e 's|sunxi-||g' )"
+		x="$(echo "$x" | tr '/' '-' | sed -e 's|sunxi[-_]||g' )"
 		if [ -n "$x" -a "$x" != sunxi ]; then
 			prefix="$prefix-$x"
 		fi
@@ -127,11 +127,9 @@ build_linux() {
 
 		[ -s "$defconfig" ] || continue
 		defconfig="${defconfig##*/}"
-		if [ "$defconfig" != "sunxi_defconfig" ]; then
-			prefix2="$prefix-${defconfig%_defconfig}"
-		else
-			prefix2="$prefix"
-		fi
+		prefix2="$(echo ${defconfig%_defconfig} |
+			sed -e 's/sunxi[_-]//g' -e 's/sunxi$//')"
+		prefix2="$prefix${prefix2:+-$prefix2}"
 
 		builddir="$base/build_$(echo $prefix2 | sed -e 's|-sunxi||g')"
 		nightly="$base/nightly/$name/$prefix2"
