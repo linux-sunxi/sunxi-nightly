@@ -14,6 +14,7 @@ main() {
 	local rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
 
 	rm -f "$builddir/.config" "$log.out"
+	rm -rf "$builddir/output"
 	mkdir -p "$nightly" "$builddir"
 
 	title "$name ($rev)"
