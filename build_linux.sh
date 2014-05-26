@@ -63,7 +63,7 @@ main() {
 		cp "$builddir/arch/arm/boot/uImage" "$builddir/$prefix/boot"
 		cp "$builddir/arch/arm/boot/dts"/*.dtb "$builddir/$prefix/boot"
 
-		tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
+		tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" | sort > "$nightly/$prefix.txt"
 		gzip -c "$builddir/.config" > "$nightly/$prefix.config.gz"
 
 		cd "$nightly"

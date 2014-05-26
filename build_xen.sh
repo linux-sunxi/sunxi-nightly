@@ -46,7 +46,7 @@ main() {
 		mkdir -p "$builddir/$prefix"
 		mv xen-uImage "$builddir/$prefix"
 
-		tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" > "$nightly/$prefix.txt"
+		tar -C "$builddir" -vJcf "$nightly/$prefix.tar.xz" "$prefix" | sort > "$nightly/$prefix.txt"
 
 		cd "$nightly"
 		sha1sum -b "$prefix.tar.xz" > "$prefix.sha1"

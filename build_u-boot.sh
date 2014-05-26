@@ -59,7 +59,7 @@ main() {
 				cp "$builddir/$x" "$nightly/$prefix-$tstamp-$rev/"
 			done
 
-			tar -C "$nightly" -vJcf "$nightly/$prefix.tar.xz" "$prefix-$tstamp-$rev" > "$nightly/$prefix.txt"
+			tar -C "$nightly" -vJcf "$nightly/$prefix.tar.xz" "$prefix-$tstamp-$rev" | sort > "$nightly/$prefix.txt"
 			rm -rf "$nightly/$prefix-$tstamp-$rev/"
 
 			cd "$nightly"
