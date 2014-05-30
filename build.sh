@@ -74,7 +74,7 @@ clone() {
 updated() {
 	local refdir="$1" branch="$2" name="$3"
 	local dir="$PWD/$name"
-	local rev= ret=false
+	local rev0= rev1= ret=false
 
 	title "$name"
 
@@ -85,12 +85,14 @@ updated() {
 		fi
 	else
 		cd "$dir"
-		git remote update
-		rev="$(git rev-parse origin/$branch)"
-		if [ "$(git rev-parse HEAD)" != "$rev" ]; then
+		rev0=$(git rev-parse HEAD)
+		git fetch origin
+		rev1="$(git rev-parse origin/$branch)"
+		if [ "$rev0" != "$rev1" ]; then
 			ret=true
 			git reset -q --hard "origin/$branch"
 		fi
+		git remote update
 		cd - > /dev/null
 	fi
 
