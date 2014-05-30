@@ -170,6 +170,7 @@ for b in \
 	stage/sunxi-3.0 \
 	stage/sunxi-3.4 \
 	experimental/sunxi-3.10 \
+	experimental/sunxi-3.14 \
 	sunxi-devel \
 	sunxi-next \
 	; do
