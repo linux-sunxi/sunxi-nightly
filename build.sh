@@ -125,6 +125,7 @@ build_linux() {
 	rev=$(git rev-parse HEAD | sed -e 's/^\(.......\).*/\1/')
 
 	for defconfig in arch/arm/configs/sun?i*_defconfig \
+		arch/arm/configs/multi_v7_defconfig \
 		arch/arm/configs/a[123][023]*_defconfig; do
 
 		[ -s "$defconfig" ] || continue
