@@ -7,6 +7,15 @@ title() {
 	echo "# $*"
 }
 
+list_configs() {
+	if [ -s boards.cfg ]; then
+		awk '/sun[4567x]i/ {print $7;}' boards.cfg
+	elif [ -d configs/ ]; then
+		grep -rl SUNXI configs/ | sed -n \
+			-e 's|.*/\(.*\)_defconfig|\1|p'
+	fi
+}
+
 main() {
 	local builddir_base="$1" nightly_base="$2" NAME="$3"
 	local log= error=
@@ -17,7 +26,7 @@ main() {
 
 	mkdir -p "$nightly_base" "$nightly"
 
-	for board in $(awk '/sun[4567x]i/ {print $7;}' boards.cfg); do
+	for board in $(list_configs); do
 		name=$(echo "$board" | tr 'A-Z' 'a-z')
 		builddir="$builddir_base/build_$name"
 		log="$builddir"
