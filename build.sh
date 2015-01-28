@@ -195,16 +195,24 @@ N=u-boot-sunxi
 simple_build() {
 	local builder="$1"
 	local name="$2" remote="$3" branch="$4"
+	local prefix=
+	local builddir= nightly=
 
 	shift 4
 
 	local refdir=$(name2gitdir "$name" "$remote")
-	local prefix=$(get_prefix "$name" "$remote" "$branch")
 	local build=false
 	local base="$PWD"
 
-	local builddir="$base/build_$(echo $prefix | sed -e 's|-sunxi||g')"
-	local nightly="$base/nightly/$name/$prefix"
+	prefix="${branch##*:}"
+	if [ "$prefix" = "$branch" ]; then
+		prefix=$(get_prefix "$name" "$remote" "$branch")
+	else
+		branch="${branch%:*}"
+	fi
+
+	builddir="$base/build_$(echo $prefix | sed -e 's|-sunxi||g')"
+	nightly="$base/nightly/$name/$prefix"
 
 	if updated "$refdir" "$branch" "$prefix"; then
 		build=true
