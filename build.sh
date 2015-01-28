@@ -234,7 +234,13 @@ build_uboot() {
 }
 
 clone $N https://github.com/linux-sunxi/$N.git
-build_uboot $N origin sunxi
+for b in sunxi \
+	mirror/sunxi:$N-custodian \
+	mirror/next:$N-custodian-next \
+	mirror/master:$N-mainline \
+	; do
+	build_uboot $N origin "$b"
+done
 
 clone $N https://github.com/arokux/$N.git arokux
 build_uboot $N arokux sunxi-usb
